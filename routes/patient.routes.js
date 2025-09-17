@@ -1,24 +1,29 @@
 // routes/patient.routes.js
 const express = require('express');
+const validate = require('../middlewares/validate');
+const {
+  createPatientSchema,
+  updatePatientSchema,
+  listQuerySchema,
+  idParamSchema,
+} = require('../validators/patient.validation');
+const patientCtrl = require('../controllers/patient.controller');
+
 const router = express.Router();
 
-const ctrl = require('../controllers/patient.controller');
-const validate = require('../middlewares/validate');
-const { createPatientSchema, updatePatientSchema } = require('../validators/patient.validation');
+// רשימה עם עמודים/חיפוש/מיון – עם ולידציית query
+router.get('/', validate.query(listQuerySchema), patientCtrl.list);
 
-// List + query (page/limit/q/minAge/maxAge/sortBy/sortDir)
-router.get('/', ctrl.list);
+// שליפת רשומה בודדת – ולידציית :id
+router.get('/:id', validate.params(idParamSchema), patientCtrl.getOne);
 
-// Get single
-router.get('/:id', ctrl.getOne);
+// יצירה – ולידציית body
+router.post('/', validate.body(createPatientSchema), patientCtrl.create);
 
-// Create (עם ולידציה)
-router.post('/', validate.body(createPatientSchema), ctrl.create);
+// עדכון – ולידציית :id + body
+router.put('/:id', validate.params(idParamSchema), validate.body(updatePatientSchema), patientCtrl.update);
 
-// Update (עם ולידציה)
-router.put('/:id', validate.body(updatePatientSchema), ctrl.update);
-
-// Delete
-router.delete('/:id', ctrl.remove);
+// מחיקה – ולידציית :id
+router.delete('/:id', validate.params(idParamSchema), patientCtrl.remove);
 
 module.exports = router;

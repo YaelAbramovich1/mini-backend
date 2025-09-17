@@ -20,3 +20,10 @@ module.exports = (err, req, res, next) => {
     error: err.message || 'internal server error',
   });
 };
+// middlewares/errorHandler.js
+module.exports = function errorHandler(err, req, res, next) {
+  console.error('ERROR HANDLER:', err && err.stack ? err.stack : err);
+  const status = err.status || 500;
+  const msg = err.message || 'internal server error';
+  res.status(status).json({ error: msg });
+};

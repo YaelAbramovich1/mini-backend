@@ -1,60 +1,37 @@
-# בסיס לכתובת
-@base = http://localhost:3000
-
 ### Health
-GET {{base}}/health
+GET http://localhost:3000/health
 
-
-### Create patient (קחי את ה-_id מהתגובה לשימוש ב-@id למטה)
-POST {{base}}/patients
+### Create
+POST http://localhost:3000/patients
 Content-Type: application/json
 
 {
   "name": "Yael",
-  "age": 20
+  "age": 25
 }
 
+### List (ברירת מחדל)
+GET http://localhost:3000/patients
 
-### List patients – בסיסי
-GET {{base}}/patients
+### List – עמוד/כמות
+GET http://localhost:3000/patients?page=2&limit=3
 
+### List – חיפוש
+GET http://localhost:3000/patients?q=ya
 
-### List with pagination (page 1, limit 5)
-GET {{base}}/patients?page=1&limit=5
+### List – סינון גילאים
+GET http://localhost:3000/patients?minAge=20&maxAge=40
 
+### List – מיון
+GET http://localhost:3000/patients?sortBy=name&sortDir=asc
 
-### List with search by name (case-insensitive)
-GET {{base}}/patients?q=ya
+### Get one (עדכני את ה-id)
+@oneId = 68c97add7df72fc9b5d07768
+GET http://localhost:3000/patients/{{oneId}}
 
-
-### List with age filter (18–40)
-GET {{base}}/patients?minAge=18&maxAge=40
-
-
-### List with sorting by name ascending
-GET {{base}}/patients?sortBy=name&sortDir=asc
-
-
-### List – שילוב: עמודים + חיפוש + מיון
-GET {{base}}/patients?page=2&limit=3&q=ya&sortBy=createdAt&sortDir=desc
-
-
-
- ### Get single patient by id
-@oneId = 68ca978f3c9039c4198c6b57
-
-
-
-GET {{base}}/patients/{{oneId}}
-
-
-### ----- פעולות לפי מזהה -----
-# עדכני כאן את ה-id לאחר יצירה/מתוך Compass
-@id = 68ca978f3c9039c4198c6b57
-
-
-### Update patient
-PUT {{base}}/patients/{{id}}
+### Update (עדכני id)
+@id = 68c97add7df72fc9b5d07768
+PUT http://localhost:3000/patients/{{id}}
 Content-Type: application/json
 
 {
@@ -62,6 +39,13 @@ Content-Type: application/json
   "age": 28
 }
 
+### Delete (עדכני id)
+DELETE http://localhost:3000/patients/{{id}}
 
-### Delete patient
-DELETE {{base}}/patients/{{id}}
+
+### --- בדיקות שגיאה (אמור להחזיר 400) ---
+# id לא תקין
+GET http://localhost:3000/patients/123
+
+# page לא תקין (טקסט במקום מספר)
+GET http://localhost:3000/patients?page=abc

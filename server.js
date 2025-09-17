@@ -8,11 +8,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
+const patientRoutes = require('./routes/patient.routes');
 
 const app = express();
 
@@ -21,22 +20,10 @@ const VER = 'v1.0';
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// ------- Middlewares (סדר חשוב) -------
-app.use(helmet());              // כותרות אבטחה
-app.use(cors());                // בשלב לימוד – פתוח; בעתיד לצמצם origin
-app.use(express.json());        // JSON parser
-app.use(morgan('dev'));         // לוגים יפים
-
-// Rate limit בסיסי ל-API (מונע הצפה)
-app.use(
-  '/patients',
-  rateLimit({
-    windowMs: 15 * 60 * 1000,   // 15 דקות
-    max: 300,                   // עד 300 בקשות ל-15 דקות ל-IP
-    standardHeaders: true,
-    legacyHeaders: false,
-  })
-);
+// ------- Middlewares (order matters) -------
+app.use(cors());
+app.use(express.json());
+app.use(morgan('dev'));
 
 // ------- DB Connect -------
 mongoose
@@ -48,10 +35,8 @@ mongoose
   });
 
 // ------- Routes -------
-const patientRoutes = require('./routes/patient.routes');
 app.use('/patients', patientRoutes);
 
-// Health
 app.get('/health', (req, res) => {
   res.status(200).json({
     ok: true,
@@ -61,7 +46,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 404 + Error handler
+// ------- 404 & Error handlers (must be last) -------
 app.use(notFound);
 app.use(errorHandler);
 

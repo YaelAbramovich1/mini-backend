@@ -6,3 +6,4 @@ module.exports = (req, res, next) => {
     url: req.originalUrl,
   });
 };
+
