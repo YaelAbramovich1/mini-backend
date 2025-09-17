@@ -1,0 +1,43 @@
+# בסיס לכתובת
+@base = http://localhost:3000
+
+### Health
+GET {{base}}/health
+
+### Create patient
+POST {{base}}/patients
+Content-Type: application/json
+
+{
+  "name": "Yael",
+  "age": 25
+}
+
+### List patients
+GET {{base}}/patients
+
+### Update patient
+# שימי כאן _id אמיתי מה-GET/POST
+@id = 68c9716d8c43d23bf930a3ff
+
+PUT {{base}}/patients/{{id}}
+Content-Type: application/json
+
+{
+  "name": "Yael Updated",
+  "age": 28
+}
+
+### Delete patient
+DELETE {{base}}/patients/{{id}}
+### Pagination – page 1, 5 per page
+GET {{base}}/patients?limit=5&page=1
+
+### Search "ya" in name, sort by age asc
+GET {{base}}/patients?q=ya&sortBy=age&sortDir=asc&limit=10
+
+### Filter by age range
+GET {{base}}/patients?minAge=30&maxAge=45&limit=10
+
+### Next page
+GET {{base}}/patients?limit=5&page=2
