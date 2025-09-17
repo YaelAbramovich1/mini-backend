@@ -41,7 +41,7 @@ GET {{base}}/patients?page=2&limit=3&q=ya&sortBy=createdAt&sortDir=desc
 
 
  ### Get single patient by id
-@oneId = 68ca75eaaa2ea89080efb7dd
+@oneId = 68ca978f3c9039c4198c6b57
 
 
 
@@ -50,7 +50,7 @@ GET {{base}}/patients/{{oneId}}
 
 ### ----- פעולות לפי מזהה -----
 # עדכני כאן את ה-id לאחר יצירה/מתוך Compass
-@id = 68c97add7df72fc9b5d07768
+@id = 68ca978f3c9039c4198c6b57
 
 
 ### Update patient

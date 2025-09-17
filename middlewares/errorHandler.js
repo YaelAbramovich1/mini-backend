@@ -1,5 +1,22 @@
+// middlewares/errorHandler.js
 module.exports = (err, req, res, next) => {
-  console.error('[ERROR]', err);
-  if (res.headersSent) return next(err);
-  res.status(500).json({ error: 'internal server error' });
+  console.error('❗ ERROR:', err);
+
+  // Joi validation error?
+  if (err && err.isJoi) {
+    return res.status(400).json({
+      error: 'validation error',
+      details: err.details?.map(d => d.message) || [err.message],
+    });
+  }
+
+  // Mongoose cast error (ObjectId לא חוקי)
+  if (err?.name === 'CastError') {
+    return res.status(400).json({ error: 'invalid id' });
+  }
+
+  // Default
+  res.status(err.status || 500).json({
+    error: err.message || 'internal server error',
+  });
 };

@@ -8,6 +8,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+const notFound = require('./middlewares/notFound');
+const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
@@ -17,9 +22,21 @@ const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // ------- Middlewares (סדר חשוב) -------
-app.use(cors());
-app.use(express.json());
-app.use(morgan('dev'));
+app.use(helmet());              // כותרות אבטחה
+app.use(cors());                // בשלב לימוד – פתוח; בעתיד לצמצם origin
+app.use(express.json());        // JSON parser
+app.use(morgan('dev'));         // לוגים יפים
+
+// Rate limit בסיסי ל-API (מונע הצפה)
+app.use(
+  '/patients',
+  rateLimit({
+    windowMs: 15 * 60 * 1000,   // 15 דקות
+    max: 300,                   // עד 300 בקשות ל-15 דקות ל-IP
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
 
 // ------- DB Connect -------
 mongoose
@@ -31,7 +48,7 @@ mongoose
   });
 
 // ------- Routes -------
-const patientRoutes = require('./routes/patient.routes'); // משתמשים בראוטר החיצוני
+const patientRoutes = require('./routes/patient.routes');
 app.use('/patients', patientRoutes);
 
 // Health
@@ -43,14 +60,10 @@ app.get('/health', (req, res) => {
     time: new Date().toISOString(),
   });
 });
-const notFound = require('./middlewares/notFound');
-const errorHandler = require('./middlewares/errorHandler');
 
-// ... כל הראוטים מעל זה
-
+// 404 + Error handler
 app.use(notFound);
 app.use(errorHandler);
-
 
 // ------- Start server -------
 app.listen(PORT, () => {

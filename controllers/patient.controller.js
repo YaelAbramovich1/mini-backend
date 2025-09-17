@@ -1,38 +1,87 @@
-const svc = require('../services/patient.service');
-const asyncWrap = require('../utils/asyncWrap');
+// controllers/patient.controller.js
 const mongoose = require('mongoose');
+const Patient = require('../models/patient');
+const asyncHandler = require('../utils/asyncHandler');
 
-exports.list = asyncWrap(async (req, res) => {
-  const out = await svc.list(req.query);
-  res.json(out);
+// GET /patients – עם עמודים/חיפוש/סינון/מיון
+exports.list = asyncHandler(async (req, res) => {
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
+  const page  = Math.max(parseInt(req.query.page) || 1, 1);
+  const skip  = (page - 1) * limit;
+
+  const sortBy  = req.query.sortBy || 'createdAt';
+  const sortDir = (req.query.sortDir || 'desc').toLowerCase() === 'asc' ? 1 : -1;
+
+  const filter = {};
+  if (req.query.q) filter.name = { $regex: req.query.q, $options: 'i' };
+
+  const minAge = req.query.minAge ? Number(req.query.minAge) : undefined;
+  const maxAge = req.query.maxAge ? Number(req.query.maxAge) : undefined;
+  if (minAge !== undefined || maxAge !== undefined) {
+    filter.age = {};
+    if (!Number.isNaN(minAge)) filter.age.$gte = minAge;
+    if (!Number.isNaN(maxAge)) filter.age.$lte = maxAge;
+  }
+
+  const [total, rows] = await Promise.all([
+    Patient.countDocuments(filter),
+    Patient.find(filter).sort({ [sortBy]: sortDir }).skip(skip).limit(limit).lean(),
+  ]);
+
+  res.json({ data: rows, meta: { total, page, pages: Math.ceil(total / limit) || 1, limit } });
 });
 
-exports.getOne = asyncWrap(async (req, res) => {
-  const row = await svc.getById(req.params.id);
+// GET /patients/:id
+exports.getOne = asyncHandler(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: 'invalid id' });
+  }
+  const row = await Patient.findById(req.params.id).lean();
   if (!row) return res.status(404).json({ error: 'patient not found' });
   res.json(row);
 });
 
-exports.create = asyncWrap(async (req, res) => {
+// POST /patients
+exports.create = asyncHandler(async (req, res) => {
   const { name, age } = req.body || {};
-  if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name (string) is required' });
-  if (age === undefined || typeof age !== 'number' || age < 0) return res.status(400).json({ error: 'age (number >=0) is required' });
-  const row = await svc.create({ name, age });
+  if (!name || typeof name !== 'string') {
+    return res.status(400).json({ error: 'name (string) is required' });
+  }
+  if (age === undefined || typeof age !== 'number' || age < 0) {
+    return res.status(400).json({ error: 'age (number >=0) is required' });
+  }
+  const row = await Patient.create({ name: name.trim(), age });
   res.status(201).json(row);
 });
 
-exports.update = asyncWrap(async (req, res) => {
+// PUT /patients/:id
+exports.update = asyncHandler(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: 'invalid id' });
+  }
   const { name, age } = req.body || {};
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'invalid id' });
-  if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name (string) is required' });
-  if (age === undefined || typeof age !== 'number' || age < 0) return res.status(400).json({ error: 'age (number >=0) is required' });
-  const row = await svc.update(req.params.id, { name, age });
+  if (!name || typeof name !== 'string') {
+    return res.status(400).json({ error: 'name (string) is required' });
+  }
+  if (age === undefined || typeof age !== 'number' || age < 0) {
+    return res.status(400).json({ error: 'age (number >=0) is required' });
+  }
+
+  const row = await Patient.findByIdAndUpdate(
+    req.params.id,
+    { name: name.trim(), age },
+    { new: true, runValidators: true }
+  );
   if (!row) return res.status(404).json({ error: 'patient not found' });
   res.json(row);
 });
 
-exports.remove = asyncWrap(async (req, res) => {
-  const row = await svc.remove(req.params.id);
-  if (!row) return res.status(404).json({ error: 'patient not found' });
+// DELETE /patients/:id
+exports.remove = asyncHandler(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: 'invalid id' });
+  }
+  const out = await Patient.findByIdAndDelete(req.params.id);
+  if (!out) return res.status(404).json({ error: 'patient not found' });
   res.status(204).send();
 });

@@ -1,49 +1,39 @@
-const mongoose = require('mongoose');
+// services/patient.service.js
 const Patient = require('../models/patient');
 
-function buildFilter(q, minAge, maxAge) {
-  const filter = {};
-  if (q) filter.name = { $regex: q, $options: 'i' };
-  if (minAge !== undefined || maxAge !== undefined) {
-    filter.age = {};
-    if (!Number.isNaN(Number(minAge))) filter.age.$gte = Number(minAge);
-    if (!Number.isNaN(Number(maxAge))) filter.age.$lte = Number(maxAge);
-  }
-  return filter;
-}
-
-async function list({ page = 1, limit = 20, sortBy = 'createdAt', sortDir = 'desc', q, minAge, maxAge }) {
+exports.list = async ({ page = 1, limit = 20, q, minAge, maxAge, sortBy = 'createdAt', sortDir = 'desc' }) => {
   limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
   page  = Math.max(parseInt(page) || 1, 1);
   const skip = (page - 1) * limit;
-  const filter = buildFilter(q, minAge, maxAge);
-  const dir = (String(sortDir).toLowerCase() === 'asc') ? 1 : -1;
 
-  const [total, data] = await Promise.all([
+  const filter = {};
+  if (q) filter.name = { $regex: q, $options: 'i' };
+  const min = minAge !== undefined ? Number(minAge) : undefined;
+  const max = maxAge !== undefined ? Number(maxAge) : undefined;
+  if (min !== undefined || max !== undefined) {
+    filter.age = {};
+    if (!Number.isNaN(min)) filter.age.$gte = min;
+    if (!Number.isNaN(max)) filter.age.$lte = max;
+  }
+
+  const dir  = (String(sortDir).toLowerCase() === 'asc') ? 1 : -1;
+
+  const [total, rows] = await Promise.all([
     Patient.countDocuments(filter),
-    Patient.find(filter).sort({ [sortBy]: dir }).skip(skip).limit(limit).lean()
+    Patient.find(filter).sort({ [sortBy]: dir }).skip(skip).limit(limit).lean(),
   ]);
 
-  return { data, meta: { total, page, pages: Math.ceil(total / limit) || 1, limit } };
-}
+  return {
+    data: rows,
+    meta: { total, page, pages: Math.ceil(total / limit) || 1, limit }
+  };
+};
 
-async function create({ name, age }) {
-  return Patient.create({ name: name.trim(), age });
-}
+exports.getById = (id) => Patient.findById(id).lean();
 
-async function update(id, { name, age }) {
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return Patient.findByIdAndUpdate(id, { name: name.trim(), age }, { new: true, runValidators: true });
-}
+exports.create = (payload) => Patient.create(payload);
 
-async function remove(id) {
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return Patient.findByIdAndDelete(id);
-}
+exports.update = (id, payload) =>
+  Patient.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
 
-async function getById(id) {
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return Patient.findById(id).lean();
-}
-
-module.exports = { list, create, update, remove, getById };
+exports.remove = (id) => Patient.findByIdAndDelete(id);
