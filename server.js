@@ -43,17 +43,14 @@ app.get('/health', (req, res) => {
     time: new Date().toISOString(),
   });
 });
+const notFound = require('./middlewares/notFound');
+const errorHandler = require('./middlewares/errorHandler');
 
-// 404 JSON
-app.use((req, res) => {
-  res.status(404).json({ error: 'route not found', method: req.method, url: req.url });
-});
+// ... כל הראוטים מעל זה
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('ERROR:', err);
-  res.status(500).json({ error: 'internal server error' });
-});
+app.use(notFound);
+app.use(errorHandler);
+
 
 // ------- Start server -------
 app.listen(PORT, () => {
