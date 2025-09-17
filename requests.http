@@ -4,22 +4,56 @@
 ### Health
 GET {{base}}/health
 
-### Create patient
+
+### Create patient (קחי את ה-_id מהתגובה לשימוש ב-@id למטה)
 POST {{base}}/patients
 Content-Type: application/json
 
 {
   "name": "Yael",
-  "age": 25
+  "age": 20
 }
 
-### List patients
+
+### List patients – בסיסי
 GET {{base}}/patients
 
-### Update patient
-# שימי כאן _id אמיתי מה-GET/POST
-@id = 68c9716d8c43d23bf930a3ff
 
+### List with pagination (page 1, limit 5)
+GET {{base}}/patients?page=1&limit=5
+
+
+### List with search by name (case-insensitive)
+GET {{base}}/patients?q=ya
+
+
+### List with age filter (18–40)
+GET {{base}}/patients?minAge=18&maxAge=40
+
+
+### List with sorting by name ascending
+GET {{base}}/patients?sortBy=name&sortDir=asc
+
+
+### List – שילוב: עמודים + חיפוש + מיון
+GET {{base}}/patients?page=2&limit=3&q=ya&sortBy=createdAt&sortDir=desc
+
+
+
+ ### Get single patient by id
+@oneId = 68ca75eaaa2ea89080efb7dd
+
+
+
+GET {{base}}/patients/{{oneId}}
+
+
+### ----- פעולות לפי מזהה -----
+# עדכני כאן את ה-id לאחר יצירה/מתוך Compass
+@id = 68c97add7df72fc9b5d07768
+
+
+### Update patient
 PUT {{base}}/patients/{{id}}
 Content-Type: application/json
 
@@ -28,16 +62,6 @@ Content-Type: application/json
   "age": 28
 }
 
+
 ### Delete patient
 DELETE {{base}}/patients/{{id}}
-### Pagination – page 1, 5 per page
-GET {{base}}/patients?limit=5&page=1
-
-### Search "ya" in name, sort by age asc
-GET {{base}}/patients?q=ya&sortBy=age&sortDir=asc&limit=10
-
-### Filter by age range
-GET {{base}}/patients?minAge=30&maxAge=45&limit=10
-
-### Next page
-GET {{base}}/patients?limit=5&page=2

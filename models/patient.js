@@ -8,7 +8,5 @@ const patientSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-patientSchema.index({ name: 1 });
 
 module.exports = mongoose.model('Patient', patientSchema);
-patientSchema.index({ name: 1 });
